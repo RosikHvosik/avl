@@ -2,7 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include <stdexcept>
-#include "PASRSING.h" // Убедитесь, что имя файла корректное
+#include "PASRSING.h"
 
 struct Node {
     std::string surname;
