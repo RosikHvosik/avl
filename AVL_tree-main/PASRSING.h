@@ -1,36 +1,56 @@
 #include <string>
 #include <sstream>
-#include <tuple>
 #include <stdexcept>
-#include <cctype>
-#include <algorithm>
+#include <locale>
+#include <codecvt>
+#include <tuple>
 
-
-std::string trim(const std::string& str) {
-    size_t start = str.find_first_not_of(" \t");
-    size_t end = str.find_last_not_of(" \t");
-    return (start == std::string::npos) ? "" : str.substr(start, end - start + 1);
+// Удаление лишних пробелов
+std::wstring trim(const std::wstring& str) {
+    size_t start = str.find_first_not_of(L" \t");
+    size_t end = str.find_last_not_of(L" \t");
+    return (start == std::wstring::npos) ? L"" : str.substr(start, end - start + 1);
 }
 
+// Проверка, является ли символ русской буквой
+bool isRussianLetter(wchar_t ch) {
+    return (ch >= L'А' && ch <= L'Я') ||  // А-Я
+           (ch >= L'а' && ch <= L'я') ||  // а-я
+           (ch == L'Ё') || (ch == L'ё');  // Ё и ё
+}
 
-bool isValidNamePart(const std::string& part) {
+// Проверка валидности имени
+bool isValidNamePart(const std::wstring& part) {
     if (part.size() < 2) {
-        return false; 
+        return false;
     }
-    for (unsigned char ch : part) {
-        if (!std::isalpha(ch)) {
-            return false; 
+
+    for (wchar_t ch : part) {
+        if (!isRussianLetter(ch)) {
+            return false;
         }
     }
     return true;
 }
 
-std::tuple<std::string, std::string, std::string> parseFullName(const std::string& line) {
-    std::istringstream iss(line);
-    std::string surname, name, patronymic;
+std::wstring stringToWstring(const std::string& str) {
+    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
+    return converter.from_bytes(str);
+}
 
-    if (!(iss >> surname >> name >> patronymic)) {
-        throw std::runtime_error("Ошибка разбора строки: должно быть ровно три слова (ФИО): " + line);
+std::string wstringToString(const std::wstring& wstr) {
+    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
+    return converter.to_bytes(wstr);
+}
+
+std::tuple<std::string, std::string, std::string> parseFullName(const std::string& line) {
+    std::wstring wline = stringToWstring(line);
+    std::wistringstream wiss(wline);
+
+    std::wstring surname, name, patronymic;
+
+    if (!(wiss >> surname >> name >> patronymic)) {
+        throw std::runtime_error("Ошибка разбора строки: должно быть ровно три слова (ФИО).");
     }
 
     surname = trim(surname);
@@ -38,14 +58,18 @@ std::tuple<std::string, std::string, std::string> parseFullName(const std::strin
     patronymic = trim(patronymic);
 
     if (!isValidNamePart(surname)) {
-        throw std::runtime_error("Некорректная фамилия: " + surname + ". Должна содержать только буквы и быть не короче 2 символов.");
+        throw std::runtime_error("Некорректная фамилия: " + wstringToString(surname) +
+                                 ". Должна содержать только русские буквы и быть не короче 2 символов.");
     }
     if (!isValidNamePart(name)) {
-        throw std::runtime_error("Некорректное имя: " + name + ". Должна содержать только буквы и быть не короче 2 символов.");
+        throw std::runtime_error("Некорректное имя: " + wstringToString(name) +
+                                 ". Должна содержать только русские буквы и быть не короче 2 символов.");
     }
     if (!isValidNamePart(patronymic)) {
-        throw std::runtime_error("Некорректное отчество: " + patronymic + ". Должна содержать только буквы и быть не короче 2 символов.");
+        throw std::runtime_error("Некорректное отчество: " + wstringToString(patronymic) +
+                                 ". Должна содержать только русские буквы и быть не короче 2 символов.");
     }
 
-    return {surname, name, patronymic};
+    // Преобразуем обратно в std::string для совместимости с остальным кодом
+    return {wstringToString(surname), wstringToString(name), wstringToString(patronymic)};
 }

@@ -2,6 +2,7 @@
 #include <iostream>
 #include <algorithm>
 #include <fstream>
+#include <queue>
 #include "key.h"
 
 struct TreeNode {
@@ -22,6 +23,7 @@ class AVL_tree{
 
 	~AVL_tree(){
 		clear(root);
+		std::cout<<"\nДерево уничтожено";
 	}
 
 		void clear(TreeNode* node) {
@@ -271,10 +273,6 @@ class AVL_tree{
     outFile.close();  
 	}
 
-	
-	void print() const {
-        inOrder(root);
-    }
 	void printt(TreeNode* node, int depth = 0) const {
     if (node != nullptr) {
         printt(node->right, depth + 1);
@@ -288,6 +286,7 @@ class AVL_tree{
         printt(node->left, depth + 1);
     }
 	}
+
 
 	TreeNode* search(const FIO& fio, TreeNode* p) const {
     if (p == nullptr) {
@@ -303,5 +302,8 @@ class AVL_tree{
     else {
       return search(fio, p->right);
     }
+	}
+	TreeNode* findroot(){
+		return this->root;
 	}
 }; 
